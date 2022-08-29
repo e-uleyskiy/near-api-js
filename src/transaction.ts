@@ -46,6 +46,7 @@ class DeleteAccount extends IAction { beneficiaryId: string; }
 class DelegateAction extends Assignable {
     receiverId: string;
     deposit: BN;
+    nonce: number
     actions: Action[];
 }
 class SignedDelegateAction extends IAction {
@@ -106,9 +107,9 @@ export function deleteAccount(beneficiaryId: string): Action {
     return new Action({deleteAccount: new DeleteAccount({ beneficiaryId }) });
 }
 
-export function delegateAction(receiverId: string, deposit: BN, actions: Action[], keyPair: KeyPair): Action {
+export function delegateAction(receiverId: string, deposit: BN, actions: Action[], keyPair: KeyPair, nonce: number): Action {
     const publicKey = keyPair.getPublicKey();
-    const delegateActionData = new DelegateAction({receiverId, deposit, actions});
+    const delegateActionData = new DelegateAction({receiverId, deposit, nonce, actions});
     const delegateActionSerde = serialize(SCHEMA, delegateActionData)
     const signature = signDelegateActionData(delegateActionSerde, keyPair);
     return new Action({delegate: new SignedDelegateAction({
@@ -252,6 +253,7 @@ export const SCHEMA = new Map<Function, any>([
     [DelegateAction, { kind: 'struct', fields: [
         ['receiverId', 'string'],
         ['deposit', 'u128'],
+        ['nonce', 'u64'],
         ['actions', [Action]],
     ]}],
     [SignedDelegateAction, { kind: 'struct', fields: [
